@@ -1,0 +1,320 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="theme-color" content="#0D0D0D" />
+  <title>Gear Bags — Robotics Checklist</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.2/babel.min.js"></script>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+    body { background: #0D0D0D; font-family: 'DM Sans', 'Segoe UI', sans-serif; }
+    input::placeholder { color: #444; }
+    input:focus { outline: none; border-color: #444 !important; }
+    ::-webkit-scrollbar { display: none; }
+    .tap-card:active { transform: scale(0.97); }
+    .tap-btn:active { opacity: 0.7; }
+  </style>
+</head>
+<body>
+  <div id="root"></div>
+
+  <script type="text/babel">
+    const { useState, useEffect } = React;
+
+    const STORAGE_KEY = "robotics_gear_lists";
+
+    const DEFAULT_LISTS = [
+      {
+        id: "coding",
+        name: "Coding",
+        emoji: "💻",
+        color: "#00E5FF",
+        items: ["Laptop", "Charger", "USB Hub", "Ethernet Cable", "Spare USB", "Code Backup Drive", "Mouse", "Headphones"]
+      },
+      {
+        id: "mechanical",
+        name: "Mechanical",
+        emoji: "🔧",
+        color: "#FF6B35",
+        items: ["Wrench Set", "Zip Ties", "Duct Tape", "Spare Motors", "Screwdrivers", "Allen Keys", "Pliers", "Safety Glasses"]
+      },
+      {
+        id: "pr",
+        name: "PR",
+        emoji: "📣",
+        color: "#B39DDB",
+        items: ["Team Banner", "Business Cards", "Notebook", "Pens", "Camera", "Tripod", "Team Shirts", "Presentation Clicker"]
+      },
+      {
+        id: "3ddesign",
+        name: "3D Design",
+        emoji: "🖨️",
+        color: "#66BB6A",
+        items: ["Filament Spools", "Spare Nozzles", "Calipers", "Design Files USB", "Print Removal Tools", "Laptop", "Reference Prints"]
+      }
+    ];
+
+    function App() {
+      const [lists, setLists] = useState(() => {
+        try {
+          const saved = localStorage.getItem(STORAGE_KEY);
+          return saved ? JSON.parse(saved) : DEFAULT_LISTS;
+        } catch { return DEFAULT_LISTS; }
+      });
+
+      const [screen, setScreen] = useState("home");
+      const [activeListId, setActiveListId] = useState(null);
+      const [checklistItems, setChecklistItems] = useState([]);
+      const [newItemText, setNewItemText] = useState("");
+      const [newListName, setNewListName] = useState("");
+      const [newListEmoji, setNewListEmoji] = useState("📦");
+      const [showAddList, setShowAddList] = useState(false);
+      const [checklistDone, setChecklistDone] = useState(false);
+
+      useEffect(() => {
+        try { localStorage.setItem(STORAGE_KEY, JSON.stringify(lists)); } catch {}
+      }, [lists]);
+
+      const activeList = lists.find(l => l.id === activeListId);
+
+      const openList = (id) => { setActiveListId(id); setScreen("list"); };
+
+      const startChecklist = (listId) => {
+        const list = lists.find(l => l.id === listId);
+        const shuffled = [...list.items].sort(() => Math.random() - 0.5);
+        setChecklistItems(shuffled);
+        setChecklistDone(false);
+        setActiveListId(listId);
+        setScreen("checklist");
+      };
+
+      const dismissItem = (item) => {
+        const next = checklistItems.filter(i => i !== item);
+        setChecklistItems(next);
+        if (next.length === 0) setChecklistDone(true);
+      };
+
+      const addItem = () => {
+        if (!newItemText.trim()) return;
+        setLists(prev => prev.map(l =>
+          l.id === activeListId ? { ...l, items: [...l.items, newItemText.trim()] } : l
+        ));
+        setNewItemText("");
+      };
+
+      const removeItem = (item) => {
+        setLists(prev => prev.map(l =>
+          l.id === activeListId ? { ...l, items: l.items.filter(i => i !== item) } : l
+        ));
+      };
+
+      const addList = () => {
+        if (!newListName.trim()) return;
+        const id = "list-" + Date.now();
+        const colors = ["#FF80AB", "#FFD740", "#40C4FF", "#69F0AE", "#FF6E40"];
+        setLists(prev => [...prev, {
+          id, name: newListName.trim(), emoji: newListEmoji,
+          color: colors[Math.floor(Math.random() * colors.length)], items: []
+        }]);
+        setNewListName(""); setNewListEmoji("📦"); setShowAddList(false);
+      };
+
+      const deleteList = (id) => {
+        setLists(prev => prev.filter(l => l.id !== id));
+        setScreen("home");
+      };
+
+      const s = {
+        wrap: { fontFamily: "'DM Sans','Segoe UI',sans-serif", background: "#0D0D0D", minHeight: "100vh", maxWidth: 430, margin: "0 auto", color: "#F0F0F0", position: "relative" },
+        header: { padding: "52px 24px 16px", background: "linear-gradient(180deg,#1A1A1A 0%,#0D0D0D 100%)", borderBottom: "1px solid #222" },
+        backBtn: { background: "none", border: "none", color: "#666", fontSize: 13, cursor: "pointer", padding: "0 0 10px", display: "flex", alignItems: "center", gap: 6 },
+        label: { fontSize: 11, letterSpacing: 3, color: "#555", textTransform: "uppercase", marginBottom: 4 },
+        title: { margin: 0, fontWeight: 700 },
+        packBtn: (color) => ({ background: color, color: "#000", border: "none", borderRadius: 20, padding: "10px 18px", fontWeight: 700, fontSize: 12, cursor: "pointer" }),
+        card: (color) => ({ background: "#161616", border: "1px solid #222", borderLeft: `4px solid ${color}`, borderRadius: 16, marginBottom: 12, overflow: "hidden" }),
+        pill: { background: "#1E1E1E", border: "1px solid #2A2A2A", borderRadius: 8, padding: "3px 10px", fontSize: 11, color: "#888" },
+        row: { display: "flex", alignItems: "center", padding: "16px 16px 16px 20px" },
+        dot: (color) => ({ width: 8, height: 8, borderRadius: "50%", background: color, marginRight: 14, flexShrink: 0 }),
+        input: { flex: 1, background: "#1A1A1A", border: "1px solid #2A2A2A", borderRadius: 12, color: "#FFF", padding: "13px 16px", fontSize: 14 },
+        addBtn: (color) => ({ background: color, border: "none", borderRadius: 12, color: "#000", padding: "13px 20px", fontWeight: 700, fontSize: 16, cursor: "pointer" }),
+        fixedBar: { position: "fixed", bottom: 0, left: "50%", transform: "translateX(-50%)", width: "100%", maxWidth: 430, background: "#111", borderTop: "1px solid #222", padding: "16px 20px 36px", boxSizing: "border-box" },
+        itemRow: { display: "flex", alignItems: "center", background: "#161616", border: "1px solid #222", borderRadius: 12, padding: "14px 16px", marginBottom: 8 },
+        bigCard: (color) => ({ background: "#161616", border: `2px solid ${color}`, borderRadius: 24, padding: "48px 32px", marginBottom: 24, cursor: "pointer", userSelect: "none", boxShadow: `0 0 40px ${color}22`, transition: "transform 0.1s" }),
+        queueItem: (opacity) => ({ display: "flex", alignItems: "center", background: "#111", border: "1px solid #1E1E1E", borderRadius: 14, padding: "14px 20px", marginBottom: 8, cursor: "pointer", opacity, textAlign: "left" }),
+      };
+
+      return (
+        <div style={s.wrap}>
+          {/* HEADER */}
+          <div style={s.header}>
+            {screen !== "home" && (
+              <button className="tap-btn" style={s.backBtn}
+                onClick={() => setScreen(screen === "checklist" ? "list" : "home")}>
+                ← Back
+              </button>
+            )}
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+              <div>
+                <div style={s.label}>
+                  {screen === "home" ? "Competition Prep" : screen === "checklist" ? "Packing Mode" : activeList?.name}
+                </div>
+                <h1 style={{ ...s.title, fontSize: screen === "home" ? 26 : 22 }}>
+                  {screen === "home" ? "⚙️ Gear Bags" : screen === "checklist" ? "📦 Pack It Up" : `${activeList?.emoji} ${activeList?.name}`}
+                </h1>
+              </div>
+              {screen === "list" && activeList && (
+                <button className="tap-btn" style={s.packBtn(activeList.color)}
+                  onClick={() => startChecklist(activeListId)}>
+                  PACK →
+                </button>
+              )}
+            </div>
+          </div>
+
+          {/* HOME */}
+          {screen === "home" && (
+            <div style={{ padding: "20px 20px 120px" }}>
+              <div style={{ ...s.label, marginBottom: 16 }}>{lists.length} Department{lists.length !== 1 ? "s" : ""}</div>
+
+              {lists.map(list => (
+                <div key={list.id} style={s.card(list.color)}>
+                  <div style={s.row}>
+                    <div style={{ fontSize: 28, marginRight: 14 }}>{list.emoji}</div>
+                    <div style={{ flex: 1 }}>
+                      <div style={{ fontWeight: 700, fontSize: 16 }}>{list.name}</div>
+                      <div style={{ fontSize: 12, color: "#555", marginTop: 2 }}>{list.items.length} items</div>
+                    </div>
+                    <div style={{ display: "flex", gap: 8 }}>
+                      <button className="tap-btn" onClick={() => openList(list.id)}
+                        style={{ background: "#222", border: "none", borderRadius: 10, color: "#CCC", padding: "8px 14px", fontSize: 12, cursor: "pointer", fontWeight: 600 }}>
+                        Edit
+                      </button>
+                      <button className="tap-btn" onClick={() => startChecklist(list.id)} style={s.packBtn(list.color)}>
+                        Pack
+                      </button>
+                    </div>
+                  </div>
+                  {list.items.length > 0 && (
+                    <div style={{ padding: "0 16px 14px 20px", display: "flex", flexWrap: "wrap", gap: 6 }}>
+                      {list.items.slice(0, 4).map(item => (
+                        <span key={item} style={s.pill}>{item}</span>
+                      ))}
+                      {list.items.length > 4 && <span style={{ fontSize: 11, color: "#555", alignSelf: "center" }}>+{list.items.length - 4} more</span>}
+                    </div>
+                  )}
+                </div>
+              ))}
+
+              {showAddList ? (
+                <div style={{ background: "#161616", border: "1px dashed #333", borderRadius: 16, padding: 20, marginTop: 8 }}>
+                  <div style={{ ...s.label, marginBottom: 12 }}>New Department</div>
+                  <div style={{ display: "flex", gap: 10, marginBottom: 12 }}>
+                    <input value={newListEmoji} onChange={e => setNewListEmoji(e.target.value)} maxLength={2}
+                      style={{ width: 52, background: "#111", border: "1px solid #333", borderRadius: 10, color: "#FFF", padding: 10, fontSize: 20, textAlign: "center" }} />
+                    <input value={newListName} onChange={e => setNewListName(e.target.value)}
+                      placeholder="Department name..." onKeyDown={e => e.key === "Enter" && addList()}
+                      style={{ flex: 1, background: "#111", border: "1px solid #333", borderRadius: 10, color: "#FFF", padding: "10px 14px", fontSize: 14 }} />
+                  </div>
+                  <div style={{ display: "flex", gap: 8 }}>
+                    <button className="tap-btn" onClick={addList}
+                      style={{ flex: 1, background: "#F0F0F0", border: "none", borderRadius: 10, color: "#000", padding: 12, fontWeight: 700, fontSize: 13, cursor: "pointer" }}>
+                      Create
+                    </button>
+                    <button className="tap-btn" onClick={() => setShowAddList(false)}
+                      style={{ background: "#222", border: "none", borderRadius: 10, color: "#888", padding: "12px 16px", fontSize: 13, cursor: "pointer" }}>
+                      Cancel
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <button className="tap-btn" onClick={() => setShowAddList(true)}
+                  style={{ width: "100%", background: "transparent", border: "1px dashed #2A2A2A", borderRadius: 16, color: "#444", padding: 16, fontSize: 14, cursor: "pointer", marginTop: 8, letterSpacing: 1 }}>
+                  + ADD DEPARTMENT
+                </button>
+              )}
+            </div>
+          )}
+
+          {/* LIST */}
+          {screen === "list" && activeList && (
+            <div style={{ padding: "20px 20px 120px" }}>
+              <div style={{ ...s.label, marginBottom: 16 }}>{activeList.items.length} Items</div>
+              {activeList.items.length === 0 && (
+                <div style={{ textAlign: "center", color: "#444", padding: "40px 0", fontSize: 14 }}>No items yet. Add some below ↓</div>
+              )}
+              {activeList.items.map((item, i) => (
+                <div key={i} style={s.itemRow}>
+                  <div style={s.dot(activeList.color)} />
+                  <span style={{ flex: 1, fontSize: 15 }}>{item}</span>
+                  <button className="tap-btn" onClick={() => removeItem(item)}
+                    style={{ background: "none", border: "none", color: "#444", fontSize: 20, cursor: "pointer", padding: "0 4px", lineHeight: 1 }}>×</button>
+                </div>
+              ))}
+              <div style={s.fixedBar}>
+                <div style={{ display: "flex", gap: 10 }}>
+                  <input value={newItemText} onChange={e => setNewItemText(e.target.value)}
+                    onKeyDown={e => e.key === "Enter" && addItem()}
+                    placeholder="Add item..." style={s.input} />
+                  <button className="tap-btn" onClick={addItem} style={s.addBtn(activeList.color)}>+</button>
+                </div>
+                <button className="tap-btn" onClick={() => deleteList(activeListId)}
+                  style={{ marginTop: 10, width: "100%", background: "none", border: "none", color: "#333", fontSize: 12, cursor: "pointer", letterSpacing: 1 }}>
+                  DELETE THIS LIST
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* CHECKLIST / PACKING */}
+          {screen === "checklist" && (
+            <div style={{ padding: "30px 24px", textAlign: "center" }}>
+              {checklistDone ? (
+                <div style={{ paddingTop: 80 }}>
+                  <div style={{ fontSize: 72, marginBottom: 20 }}>✅</div>
+                  <div style={{ fontSize: 24, fontWeight: 700, marginBottom: 8 }}>All packed!</div>
+                  <div style={{ fontSize: 14, color: "#555", marginBottom: 40 }}>{activeList?.name} is ready for competition.</div>
+                  <button className="tap-btn" onClick={() => setScreen("list")}
+                    style={{ background: activeList?.color, border: "none", borderRadius: 20, color: "#000", padding: "14px 36px", fontWeight: 700, fontSize: 15, cursor: "pointer" }}>
+                    Done →
+                  </button>
+                </div>
+              ) : (
+                <>
+                  <div style={{ ...s.label, marginBottom: 8 }}>{checklistItems.length} Remaining</div>
+                  <div style={{ fontSize: 13, color: "#444", marginBottom: 32 }}>Tap an item when it's packed</div>
+
+                  {checklistItems.length > 0 && (
+                    <div className="tap-card" onClick={() => dismissItem(checklistItems[0])} style={s.bigCard(activeList?.color)}>
+                      <div style={{ fontSize: 13, color: "#555", marginBottom: 12, letterSpacing: 2 }}>PACK THIS</div>
+                      <div style={{ fontSize: 26, fontWeight: 700 }}>{checklistItems[0]}</div>
+                      <div style={{ marginTop: 20, fontSize: 12, color: activeList?.color, letterSpacing: 1 }}>TAP WHEN PACKED</div>
+                    </div>
+                  )}
+
+                  {checklistItems.slice(1, 4).map((item, i) => (
+                    <div key={item} className="tap-btn" onClick={() => dismissItem(item)} style={s.queueItem(1 - i * 0.2)}>
+                      <div style={{ width: 6, height: 6, borderRadius: "50%", background: "#333", marginRight: 14 }} />
+                      <span style={{ fontSize: 14, color: "#666" }}>{item}</span>
+                    </div>
+                  ))}
+
+                  {checklistItems.length > 4 && (
+                    <div style={{ fontSize: 12, color: "#333", marginTop: 8, letterSpacing: 1 }}>+{checklistItems.length - 4} more items</div>
+                  )}
+                </>
+              )}
+            </div>
+          )}
+        </div>
+      );
+    }
+
+    ReactDOM.createRoot(document.getElementById("root")).render(<App />);
+  </script>
+</body>
+</html>
