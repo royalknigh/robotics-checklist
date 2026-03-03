@@ -6,7 +6,7 @@
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <meta name="theme-color" content="#0D0D0D" />
-  <title>Gear Bags — Robotics Checklist</title>
+  <title>Robotics Checklist</title>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.2/babel.min.js"></script>
@@ -164,7 +164,7 @@
                   {screen === "home" ? "Competition Prep" : screen === "checklist" ? "Packing Mode" : activeList?.name}
                 </div>
                 <h1 style={{ ...s.title, fontSize: screen === "home" ? 26 : 22 }}>
-                  {screen === "home" ? "⚙️ Gear Bags" : screen === "checklist" ? "📦 Pack It Up" : `${activeList?.emoji} ${activeList?.name}`}
+                  {screen === "home" ? "Baggage List" : screen === "checklist" ? "📦 Pack It Up" : `${activeList?.emoji} ${activeList?.name}`}
                 </h1>
               </div>
               {screen === "list" && activeList && (
